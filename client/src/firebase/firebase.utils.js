@@ -3,25 +3,20 @@ import "firebase/firestore";
 import "firebase/auth";
 
 const config = {
-  apiKey: "AIzaSyD4RJWR6Gso1mh6ucZ30EJGo5yQiouW9aI",
-  authDomain: "f-clothing-db.firebaseapp.com",
-  databaseURL: "https://f-clothing-db.firebaseio.com",
-  projectId: "f-clothing-db",
-  storageBucket: "f-clothing-db.appspot.com",
-  messagingSenderId: "584643907769",
-  appId: "1:584643907769:web:d59ea226a944f2f253cb68",
-  measurementId: "G-SQ30ZY8078",
+  apiKey: "AIzaSyCdHT-AYHXjF7wOrfAchX4PIm3cSj5tn14",
+  authDomain: "crwn-db.firebaseapp.com",
+  databaseURL: "https://crwn-db.firebaseio.com",
+  projectId: "crwn-db",
+  storageBucket: "crwn-db.appspot.com",
+  messagingSenderId: "850995411664",
+  appId: "1:850995411664:web:7ddc01d597846f65",
 };
 
 firebase.initializeApp(config);
-
 export const createUserProfileDocument = async (userAuth, additionalData) => {
   if (!userAuth) return;
-
   const userRef = firestore.doc(`users/${userAuth.uid}`);
-
   const snapShot = await userRef.get();
-
   if (!snapShot.exists) {
     const { displayName, email } = userAuth;
     const createdAt = new Date();
@@ -36,8 +31,20 @@ export const createUserProfileDocument = async (userAuth, additionalData) => {
       console.log("error creating user", error.message);
     }
   }
-
   return userRef;
+};
+
+export const getUserCartRef = async (userId) => {
+  const cartsRef = firestore.collection("carts").where("userId", "==", userId);
+  const snapShot = await cartsRef.get();
+
+  if (snapShot.empty) {
+    const cartDocRef = firestore.collection("carts").doc();
+    await cartDocRef.set({ userId, cartItems: [] });
+    return cartDocRef;
+  } else {
+    return snapShot.docs[0].ref;
+  }
 };
 
 export const addCollectionAndDocuments = async (
@@ -45,20 +52,17 @@ export const addCollectionAndDocuments = async (
   objectsToAdd
 ) => {
   const collectionRef = firestore.collection(collectionKey);
-
   const batch = firestore.batch();
   objectsToAdd.forEach((obj) => {
     const newDocRef = collectionRef.doc();
     batch.set(newDocRef, obj);
   });
-
   return await batch.commit();
 };
 
 export const convertCollectionsSnapshotToMap = (collections) => {
   const transformedCollection = collections.docs.map((doc) => {
     const { title, items } = doc.data();
-
     return {
       routeName: encodeURI(title.toLowerCase()),
       id: doc.id,
@@ -66,7 +70,6 @@ export const convertCollectionsSnapshotToMap = (collections) => {
       items,
     };
   });
-
   return transformedCollection.reduce((accumulator, collection) => {
     accumulator[collection.title.toLowerCase()] = collection;
     return accumulator;
